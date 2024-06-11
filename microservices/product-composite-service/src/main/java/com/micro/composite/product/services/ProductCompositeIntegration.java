@@ -1,8 +1,14 @@
 package com.micro.composite.product.services;
 
+import static org.springframework.http.HttpMethod.GET;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -11,8 +17,13 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.micro.api.core.product.Product;
 import com.micro.api.core.product.ProductService;
+import com.micro.api.core.recommendation.Recommendation;
 import com.micro.api.core.recommendation.RecommendationService;
+import com.micro.api.core.review.Review;
 import com.micro.api.core.review.ReviewService;
+import com.micro.api.exceptions.InvalidInputException;
+import com.micro.api.exceptions.NotFoundException;
+import com.micro.util.http.HttpErrorInfo;
 
 @Component
 public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
@@ -42,7 +53,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
     }
 
     public Product getProduct(int productId) {
-        
+
         try {
             String url = productServiceUrl + productId;
             LOG.debug("Will call getProduct Api on url: {}" + url);
@@ -54,12 +65,58 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         } catch (HttpClientErrorException ex) {
             switch (HttpStatus.resolve(ex.getStatusCode().value())) {
                 case NOT_FOUND:
-                    
-                    break;
-            
+                    throw new NotFoundException(getErrorMessage(ex));
+                case UNPROCESSABLE_ENTITY:
+                    throw new InvalidInputException(getErrorMessage(ex));
                 default:
-                    break;
+                    LOG.warn("Got unexpected http error message: " + ex.getStatusCode());
+                    LOG.warn("Error body: {}", ex.getResponseBodyAsString());
+                    throw ex;
             }
+        }
+    }
+
+    private String getErrorMessage(HttpClientErrorException ex) {
+        try {
+            return mapper.readValue(ex.getResponseBodyAsString(), HttpErrorInfo.class).getMessage();
+        } catch (IOException ioex) {
+            return ex.getMessage();
+        }
+    }
+
+    public List<Recommendation> getRecommendations(int productId) {
+        try {
+            String url = recommendationServiceUrl + productId;
+
+            LOG.debug("Will call getRecommendations API on url {}", url);
+            List<Recommendation> recommendations = restTemplate
+                    .exchange(url, GET, null, new ParameterizedTypeReference<List<Recommendation>>() {
+                    }).getBody();
+
+            LOG.debug("Found {} recommendations for product with id: {}", recommendations.size(), productId);
+
+            return recommendations;
+        } catch (Exception ex) {
+            LOG.warn("Got an exception while requesting recommendations, return none {}", ex.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Review> getReviews(int productId) {
+        try {
+            String url = reviewServiceUrl + productId;
+
+            LOG.debug("Will call getReviews API on url {}", url);
+            List<Review> reviews = restTemplate
+                    .exchange(url, GET, null, new ParameterizedTypeReference<List<Review>>() {
+                    }).getBody();
+
+            LOG.debug("Found {} reviews for product with id: {}", reviews.size(), productId);
+
+            return reviews;
+        } catch (Exception ex) {
+            LOG.warn("Got an exception while requesting reviews, return none {}", ex.getMessage());
+            return new ArrayList<>();
         }
     }
 }

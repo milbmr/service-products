@@ -35,9 +35,9 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         List<Review> list = new ArrayList<>();
-        list.add(new Review(productId, 1, "Author 1", "content 1", serviceUtil.getServiceAddress()));
-        list.add(new Review(productId, 2, "Author 2", "content 2", serviceUtil.getServiceAddress()));
-        list.add(new Review(productId, 3, "Author 3", "content 3", serviceUtil.getServiceAddress()));
+        list.add(new Review(productId, 1, "Author 1", "subject 1", "content 1", serviceUtil.getServiceAddress()));
+        list.add(new Review(productId, 2, "Author 2", "subject 2", "content 2", serviceUtil.getServiceAddress()));
+        list.add(new Review(productId, 3, "Author 3", "subject 3", "content 3", serviceUtil.getServiceAddress()));
 
         return list;
     }

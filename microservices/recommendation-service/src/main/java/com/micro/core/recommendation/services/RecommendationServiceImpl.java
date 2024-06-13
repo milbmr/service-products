@@ -14,34 +14,33 @@ import com.micro.util.http.ServiceUtil;
 
 @RestController
 public class RecommendationServiceImpl implements RecommendationService {
-    private static final Logger LOG = LoggerFactory.getLogger(RecommendationServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RecommendationServiceImpl.class);
+  private final ServiceUtil serviceUtil;
 
-    private final ServiceUtil serviceUtil;
+  public RecommendationServiceImpl(ServiceUtil serviceUtil) {
+    this.serviceUtil = serviceUtil;
+  }
 
-    public RecommendationServiceImpl(ServiceUtil serviceUtil) {
-        this.serviceUtil = serviceUtil;
+  @Override
+  public List<Recommendation> getRecommendations(int productId) {
+
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid product id" + productId);
     }
 
-    @Override
-    public List<Recommendation> getRecommendations(int productId) {
-
-        if (productId < 1) {
-            throw new InvalidInputException("Invalid product id" + productId);
-        }
-
-        if (productId == 113) {
-            LOG.debug("No recommendations found for productId: " + productId);
-            return new ArrayList<Recommendation>();
-        }
-
-        List<Recommendation> list = new ArrayList<Recommendation>();
-        list.add(new Recommendation(productId, 1, "Author 1", 1, "content 1", serviceUtil.getServiceAddress()));
-        list.add(new Recommendation(productId, 2, "Author 2", 2, "content 2", serviceUtil.getServiceAddress()));
-        list.add(new Recommendation(productId, 3, "Author 3", 3, "content 3", serviceUtil.getServiceAddress()));
-
-        LOG.debug("/recommendation response size {}: " + list.size());
-
-        return list;
+    if (productId == 113) {
+      LOG.debug("No recommendations found for productId: " + productId);
+      return new ArrayList<Recommendation>();
     }
+
+    List<Recommendation> list = new ArrayList<Recommendation>();
+    list.add(new Recommendation(productId, 1, "Author 1", 1, "content 1", serviceUtil.getServiceAddress()));
+    list.add(new Recommendation(productId, 2, "Author 2", 2, "content 2", serviceUtil.getServiceAddress()));
+    list.add(new Recommendation(productId, 3, "Author 3", 3, "content 3", serviceUtil.getServiceAddress()));
+
+    LOG.debug("/recommendation response size {}: " + list.size());
+
+    return list;
+  }
 
 }

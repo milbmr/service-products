@@ -5,3 +5,14 @@ logging:
   level:
     root: INFO
     '[se.com]': DEBUG
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile:
+      - docker
+
+server:
+  port: 8080

@@ -1,9 +1,9 @@
-FROM ubuntu-jre-22:latest AS build
+FROM --platform=linux/amd64 19133976bd5e AS build
 WORKDIR /extracted
 ADD /build/libs/*.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract
 
-FROM ubuntu-jre-22:latest
+FROM --platform=linux/amd64 19133976bd5e
 WORKDIR /app
 COPY --from=builder extracted/dependencies/ ./
 COPY --from=builder extracted/spring-boot-loader/ ./

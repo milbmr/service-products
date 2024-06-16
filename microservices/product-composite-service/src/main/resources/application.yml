@@ -1,6 +1,11 @@
 server.port: 7000 
 server.error.include-message: always
 
+Logging:
+    Level:
+        root: INFO
+        '[com.micro.microservices]': DEBUG
+
 app:
    product-service:
        host: localhost
@@ -14,22 +19,26 @@ app:
 
 ---
 
-spring:
-  config:
-    activate:
-      on-profile:
-      - docker
-
 server:
   port: 8080
 
+Logging:
+    Level:
+        root: DEBUG
+        '[com.micro.microservices]': DEBUG
+
+spring:
+ config:
+  activate:
+   on-profile: "docker"
+
 app:
- product-service:
-  host: product
-  port: 8080
- recommendation-service:
-  host: recommendation
-  port: 8080
- review-service:
-  host: review
-  port: 8080
+  product-service:
+    host: product
+    port: 8080
+  recommendation-service:
+    host: recommendation
+    port: 8080
+  review-service:
+    host: review
+    port: 8080

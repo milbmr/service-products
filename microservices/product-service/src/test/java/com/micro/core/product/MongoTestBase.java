@@ -5,7 +5,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
 
 public abstract class MongoTestBase {
-  private static MongoDBContainer database = new MongoDBContainer("mongo:x.x.x");
+  private static MongoDBContainer database = new MongoDBContainer("mongo");
 
   static {
     database.start();

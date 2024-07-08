@@ -2,20 +2,17 @@ package com.micro.core.product;
 
 import static java.util.stream.IntStream.rangeClosed;
 import static org.springframework.data.domain.Sort.Direction.ASC;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 
 import com.micro.core.product.persistence.ProductEntity;
 import com.micro.core.product.persistence.ProductRepository;
-import com.mongodb.DuplicateKeyException;
 
 //starts a database automaticlly
 @DataMongoTest
@@ -107,9 +103,9 @@ public class PersistenceTests extends MongoTestBase {
 
     repository.deleteAll();
 
-    List<ProductEntity> products = rangeClosed(1001, 1010)
+    List<ProductEntity> productsPage = rangeClosed(1001, 1010)
         .mapToObj(i -> new ProductEntity(i, "name" + i, i)).collect(Collectors.toList());
-    repository.saveAll(products);
+    repository.saveAll(productsPage);
 
     Pageable nextPage = PageRequest.of(0, 4, ASC, "productId");
     nextPage = testNextPage(nextPage, "[1001, 1002, 1003, 1004]", true);
@@ -118,11 +114,11 @@ public class PersistenceTests extends MongoTestBase {
   }
 
   private Pageable testNextPage(Pageable nextPage, String expectedPage, boolean nextPageExists) {
-    Page<ProductEntity> products = repository.findAll(nextPage);
-    assertEquals(expectedPage, products.getContent().stream()
+    Page<ProductEntity> productsPage = repository.findAll(nextPage);
+    assertEquals(expectedPage, productsPage.getContent().stream()
         .map(p -> p.getProductId()).collect(Collectors.toList()).toString());
-    assertEquals(nextPageExists, products.hasNext());
-    return products.nextPageable();
+    assertEquals(nextPageExists, productsPage.hasNext());
+    return productsPage.nextPageable();
   }
 
   private void assertEqualsProduct(ProductEntity assertedEntity, ProductEntity actualEntity) {

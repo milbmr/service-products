@@ -6,6 +6,8 @@ logging:
     root: INFO
     '[com.micro.microservices]': DEBUG
 
+spring.data.mongodb.auto-index-creation: true
+
 ---
 
 spring:

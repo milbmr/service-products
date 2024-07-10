@@ -1,24 +1,46 @@
 package com.micro.core.recommendation.services;
 
 import java.util.List;
-import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.micro.api.core.recommendation.Recommendation;
 import com.micro.api.core.recommendation.RecommendationService;
 import com.micro.api.exceptions.InvalidInputException;
+import com.micro.core.recommendation.persistence.RecommendationEntity;
+import com.micro.core.recommendation.persistence.RecommendationRepository;
 import com.micro.util.http.ServiceUtil;
 
 @RestController
 public class RecommendationServiceImpl implements RecommendationService {
-  private static final Logger LOG = LoggerFactory.getLogger(RecommendationServiceImpl.class);
-  private final ServiceUtil serviceUtil;
 
-  public RecommendationServiceImpl(ServiceUtil serviceUtil) {
+  private static final Logger LOG = LoggerFactory.getLogger(RecommendationServiceImpl.class);
+
+  private final ServiceUtil serviceUtil;
+  private final RecommendationRepository repository;
+  private final RecommendationMapper mapper;
+
+  public RecommendationServiceImpl(RecommendationRepository repository, RecommendationMapper mapper,
+      ServiceUtil serviceUtil) {
     this.serviceUtil = serviceUtil;
+    this.repository = repository;
+    this.mapper = mapper;
+  }
+
+  @Override
+  public Recommendation createRecommendation(Recommendation recommendation) {
+    try {
+      RecommendationEntity entity = mapper.apiToEntity(recommendation);
+      RecommendationEntity savedEntity = repository.save(entity);
+
+      LOG.debug("Creating a recommendation for the prodcut id: " + recommendation.getProductId());
+      return mapper.entityToApi(savedEntity);
+    } catch (DuplicateKeyException dke) {
+      throw new InvalidInputException("Duplicate key, prodcut id: " + recommendation.getProductId());
+    }
   }
 
   @Override
@@ -28,19 +50,19 @@ public class RecommendationServiceImpl implements RecommendationService {
       throw new InvalidInputException("Invalid product id" + productId);
     }
 
-    if (productId == 113) {
-      LOG.debug("No recommendations found for productId: " + productId);
-      return new ArrayList<Recommendation>();
-    }
+    List<RecommendationEntity> entityList = repository.findByProductId(productId);
+    List<Recommendation> apiList = mapper.entityListToApiList(entityList);
+    apiList.forEach(e -> e.setServiceAddress(serviceUtil.getServiceAddress()));
 
-    List<Recommendation> list = new ArrayList<Recommendation>();
-    list.add(new Recommendation(productId, 1, "Author 1", 1, "content 1", serviceUtil.getServiceAddress()));
-    list.add(new Recommendation(productId, 2, "Author 2", 2, "content 2", serviceUtil.getServiceAddress()));
-    list.add(new Recommendation(productId, 3, "Author 3", 3, "content 3", serviceUtil.getServiceAddress()));
+    LOG.debug("Creating recommendation list from entity for product id: ", productId);
 
-    LOG.debug("/recommendation response size {}: " + list.size());
+    return apiList;
+  }
 
-    return list;
+  @Override
+  public void deleteRecommendations(int productId) {
+    LOG.debug("Deleting recommendation list of product id: ", productId);
+    repository.deleteAll(repository.findByProductId(productId));
   }
 
 }

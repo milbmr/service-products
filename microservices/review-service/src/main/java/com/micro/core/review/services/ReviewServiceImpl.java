@@ -4,41 +4,61 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.ArrayList;
 
 import com.micro.api.core.review.Review;
 import com.micro.api.core.review.ReviewService;
 import com.micro.api.exceptions.InvalidInputException;
+import com.micro.core.review.persistence.ReviewEntity;
+import com.micro.core.review.persistence.ReviewRepository;
 import com.micro.util.http.ServiceUtil;
 
 @RestController
 public class ReviewServiceImpl implements ReviewService {
-    private static final Logger LOG = LoggerFactory.getLogger(ReviewServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ReviewServiceImpl.class);
 
-    private final ServiceUtil serviceUtil;
+  private final ServiceUtil serviceUtil;
+  private final ReviewRepository repository;
+  private final ReviewMapper mapper;
 
-    public ReviewServiceImpl(ServiceUtil serviceUtil) {
-        this.serviceUtil = serviceUtil;
+  public ReviewServiceImpl(ReviewRepository repository, ReviewMapper mapper, ServiceUtil serviceUtil) {
+    this.serviceUtil = serviceUtil;
+    this.repository = repository;
+    this.mapper = mapper;
+  }
+
+  @Override
+  public Review createReview(Review review) {
+    try {
+      ReviewEntity entity = mapper.apiToEntity(review);
+      ReviewEntity newEntity = repository.save(entity);
+
+      LOG.debug("Creating review of product id: " + review.getProductId());
+      return mapper.entityToApi(newEntity);
+    } catch (DuplicateKeyException dke) {
+      throw new InvalidInputException("Duplicate key, for prodcut id: " + review.getProductId());
+    }
+  }
+
+  @Override
+  public List<Review> getReviews(int productId) {
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid product Id: " + productId);
     }
 
-    @Override
-    public List<Review> getReviews(int productId) {
-        if (productId < 1) {
-            throw new InvalidInputException("Invalid product Id: " + productId);
-        }
+    List<ReviewEntity> entityList = repository.findByProductId(productId);
+    List<Review> apiList = mapper.entityListToApiList(entityList);
+    apiList.forEach(e -> e.setServiceAddress(serviceUtil.getServiceAddress()));
 
-        if (productId == 213) {
-            LOG.debug("No review found for productId: " + productId);
-            return new ArrayList<>();
-        }
+    LOG.debug("getReviews reviews size: " + apiList.size());
 
-        List<Review> list = new ArrayList<>();
-        list.add(new Review(productId, 1, "Author 1", "subject 1", "content 1", serviceUtil.getServiceAddress()));
-        list.add(new Review(productId, 2, "Author 2", "subject 2", "content 2", serviceUtil.getServiceAddress()));
-        list.add(new Review(productId, 3, "Author 3", "subject 3", "content 3", serviceUtil.getServiceAddress()));
+    return apiList;
+  }
 
-        return list;
-    }
+  @Override
+  public void deleteReviews(int productId) {
+    LOG.debug("Deleting reviews");
+    repository.deleteAll(repository.findByProductId(productId));
+  }
 }

@@ -36,7 +36,7 @@ public class ProductServiceIml implements ProductService {
       LOG.debug("Creating a new prodcut of id: " + product.getProductId());
       return mapper.entityToApi(entity);
     } catch (DuplicateKeyException dke) {
-      throw new InvalidInputException("Dublicate key, product id: " + product.getProductId());
+      throw new InvalidInputException("Duplicate key, product id: " + product.getProductId());
     }
 
   }

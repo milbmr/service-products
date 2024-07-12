@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.micro.api.core.review.Review;
@@ -36,7 +36,7 @@ public class ReviewServiceImpl implements ReviewService {
 
       LOG.debug("Creating review of product id: " + review.getProductId());
       return mapper.entityToApi(newEntity);
-    } catch (DuplicateKeyException dke) {
+    } catch (DataIntegrityViolationException dke) {
       throw new InvalidInputException("Duplicate key, for prodcut id: " + review.getProductId());
     }
   }

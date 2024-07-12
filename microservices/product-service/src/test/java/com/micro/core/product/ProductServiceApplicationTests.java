@@ -1,13 +1,10 @@
 package com.micro.core.product;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.*;
 import static reactor.core.publisher.Mono.just;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -51,10 +48,8 @@ class ProductServiceApplicationTests extends MongoTestBase {
     assertTrue(repository.findByProductId(productId).isPresent());
 
     postAndVerifyProduct(productId, UNPROCESSABLE_ENTITY)
-        .jsonPath("$.message")
-        .isEqualTo("Duplicate key, product id: " + productId)
-        .jsonPath("$.path")
-        .isEqualTo("/prodcut");
+        .jsonPath("$.message").isEqualTo("Duplicate key, product id: " + productId)
+        .jsonPath("$.path").isEqualTo("/product");
   }
 
   @Test
@@ -72,38 +67,26 @@ class ProductServiceApplicationTests extends MongoTestBase {
 
   @Test
   void getInvalidParametereString() {
-    getAndVerifyProduct("/no-intger", BAD_REQUEST);
-    client.get().uri("/product/no-intger").accept(APPLICATION_JSON)
-        .exchange()
-        .expectStatus().isEqualTo(BAD_REQUEST)
-        .expectHeader().contentType(APPLICATION_JSON)
-        .expectBody()
+    getAndVerifyProduct("/no-intger", BAD_REQUEST)
         .jsonPath("$.path").isEqualTo("/product/no-intger");
   }
 
   @Test
   void getProductNotFound() {
     int productId = 13;
-    client.get().uri("/product/" + productId).accept(APPLICATION_JSON)
-        .exchange()
-        .expectStatus().isEqualTo(NOT_FOUND)
-        .expectHeader().contentType(APPLICATION_JSON)
-        .expectBody()
-        .jsonPath("$.path").isEqualTo("/product/" + productId)
-        .jsonPath("$.message").isEqualTo("Not found product Id: " + productId);
+
+    getAndVerifyProduct(productId, NOT_FOUND)
+        .jsonPath("$.message").isEqualTo("No product found " + productId)
+        .jsonPath("$.path").isEqualTo("/product/" + productId);
   }
 
   @Test
   void getProductInvalidParameterNegative() {
     int productId = -1;
 
-    client.get().uri("/product/" + productId).accept(APPLICATION_JSON)
-        .exchange()
-        .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY)
-        .expectHeader().contentType(APPLICATION_JSON)
-        .expectBody()
-        .jsonPath("$.path").isEqualTo("/product/" + productId)
-        .jsonPath("$.message").isEqualTo("Invalid product Id: " + productId);
+    getAndVerifyProduct(productId, UNPROCESSABLE_ENTITY)
+        .jsonPath("$.message").isEqualTo("Invalid product Id: " + productId)
+        .jsonPath("$.path").isEqualTo("/product/" + productId);
   }
 
   private WebTestClient.BodyContentSpec getAndVerifyProduct(int prodcutId, HttpStatus expectedStatus) {
@@ -117,14 +100,23 @@ class ProductServiceApplicationTests extends MongoTestBase {
 
   private WebTestClient.BodyContentSpec postAndVerifyProduct(int productId, HttpStatus httpStatus) {
     Product product = new Product(productId, "name", productId, "address");
-    return client.post().uri("/product").body(just(product), Product.class).accept(APPLICATION_JSON)
-        .exchange().expectStatus().isEqualTo(httpStatus).expectHeader().contentType(APPLICATION_JSON).expectBody();
+    return client.post()
+        .uri("/product")
+        .body(just(product), Product.class)
+        .accept(APPLICATION_JSON)
+        .exchange()
+        .expectStatus().isEqualTo(httpStatus)
+        .expectHeader().contentType(APPLICATION_JSON)
+        .expectBody();
   }
 
   private WebTestClient.BodyContentSpec deleteAndVerifyProduct(int prodcutId, HttpStatus expextedHttpStatus) {
-    return client.delete().uri("/product/" + prodcutId).accept(APPLICATION_JSON)
-        .exchange().expectStatus().isEqualTo(expextedHttpStatus)
-        .expectHeader().contentType(APPLICATION_JSON).expectBody();
+    return client.delete()
+        .uri("/product/" + prodcutId)
+        .accept(APPLICATION_JSON)
+        .exchange()
+        .expectStatus().isEqualTo(expextedHttpStatus)
+        .expectBody();
   }
 
 }

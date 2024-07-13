@@ -3,6 +3,8 @@ package com.micro.composite.product.services;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.micro.api.composite.product.ProductAggregate;
@@ -21,8 +23,43 @@ import lombok.AllArgsConstructor;
 @RestController
 @AllArgsConstructor
 public class ProductCompositeServiceImpl implements ProductCompositeService {
+
+  private final Logger LOG = LoggerFactory.getLogger(ProductCompositeServiceImpl.class);
+
   private final ServiceUtil serviceUtil;
   private ProductCompositeIntegration integration;
+
+  @Override
+  public void createProduct(ProductAggregate body) {
+    try {
+      LOG.debug("Going to create product composite for product id {}", body.getProductId());
+      integration.createProduct(
+          new Product(body.getProductId(), body.getName(), body.getWeight(), null));
+
+      if (body.getRecommendations() != null) {
+        body.getRecommendations()
+            .forEach(r -> {
+              Recommendation rec = new Recommendation(body.getProductId(), r.getRecommendationId(), r.getAuthor(),
+                  r.getRate(),
+                  r.getContent(), null);
+              integration.createRecommendation(rec);
+            });
+      }
+
+      if (body.getReviews() != null) {
+        body.getReviews().forEach(r -> {
+          Review review = new Review(body.getProductId(), r.getReviewId(), r.getAuthor(), r.getSubject(),
+              r.getContent(), null);
+          integration.createReview(review);
+        });
+      }
+
+      LOG.debug("Prodcut composite created for product id {}", body.getProductId());
+    } catch (RuntimeException e) {
+      LOG.warn("CreateComposite failed {}", e);
+      throw e;
+    }
+  }
 
   @Override
   public ProductAggregate getProduct(int productId) {
@@ -36,6 +73,20 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
     List<Review> reviews = integration.getReviews(productId);
 
     return createProductAggregate(product, recommendations, reviews, serviceUtil.getServiceAddress());
+  }
+
+  @Override
+  public void deleteProduct(int productId) {
+    try {
+      LOG.debug("Going to delete composite for product id {}", productId);
+      integration.deleteProduct(productId);
+      integration.deleteRecommendations(productId);
+      integration.deleteReviews(productId);
+      LOG.debug("deleted composite for product id {}", productId);
+    } catch (RuntimeException e) {
+      LOG.warn("delete composite failed {}", e);
+      throw e;
+    }
   }
 
   private ProductAggregate createProductAggregate(Product product, List<Recommendation> recommendations,

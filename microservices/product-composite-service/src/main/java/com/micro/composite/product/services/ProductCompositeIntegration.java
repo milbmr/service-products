@@ -181,7 +181,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
   @Override
   public void deleteReviews(int productId) {
     try {
-      String url = recommendationServiceUrl + "?productId" + productId;
+      String url = reviewServiceUrl + "?productId=" + productId;
       LOG.debug("Going to call delete api on url {}", url);
       restTemplate.delete(url);
       LOG.debug("deleted reviews of product id {}", productId);

@@ -68,6 +68,47 @@ function waitForService() {
   echo "Done, continues.."
 }
 
+function recreateComposite() {
+  local productId=$1
+  local body=$2
+
+  assertCurl 200 "curl -X DELETE http://$HOST:$PORT/product-composite/${productId} -s"
+  curl -X POST http://$HOST:$PORT/product-composite -H "Content-Type: application/json" --data "$body"
+}
+
+function seedData() {
+  body="{\"productId\":$PROD_ID_RECS_REVS"
+  body+=\
+',"name":"product name","weight":1,"recommendations":[
+      {"recommendationId":1,"author":"a","rate":1,"content":"c"},
+      {"recommendationId":2,"author":"a","rate":2,"content":"c"},
+      {"recommendationId":3,"author":"a","rate":3,"content":"c"}
+      ], "reviews":[
+      {"reviewId":1,"author":"a","subject":"s","content":"c"},
+      {"reviewId":2,"author":"a","subject":"s","content":"c"},
+      {"reviewId":3,"author":"a","subject":"s","content":"c"}]}'
+
+  recreateComposite "$PROD_ID_RECS_REVS" "$body"
+
+  body="{\"productId\":$PROD_ID_NO_RECS"
+  body+=\
+',"reviews":[
+      {"reviewId":1,"author":"a","subject":"s","content":"c"},
+      {"reviewId":2,"author":"a","subject":"s","content":"c"},
+      {"reviewId":3,"author":"a","subject":"s","content":"c"}]}'
+
+  recreateComposite "$PROD_ID_NO_RECS" "$body"
+
+  body="{\"productId\":$PROD_ID_NO_REVS"
+  body+=\
+',"name":"product name","weight":1,"recommendations":[
+      {"recommendationId":1,"author":"a","rate":1,"content":"c"},
+      {"recommendationId":2,"author":"a","rate":2,"content":"c"},
+      {"recommendationId":3,"author":"a","rate":3,"content":"c"}]}'
+
+  recreateComposite "$PROD_ID_NO_REVS" "$body"
+}
+
 set -e
 
 echo "Start tests:" $(date)
@@ -83,7 +124,9 @@ if [[ $@ == *"start"* ]]; then
   docker compose up -d
 fi
 
-waitForService curl http://$HOST:$PORT/product-composite/$PROD_ID_RECS_REVS
+waitForService curl -X DELETE http://$HOST:$PORT/product-composite/$PROD_ID_NOT_FOUND
+
+seedData
 
 assertCurl 200 "curl http://$HOST:$PORT/product-composite/$PROD_ID_RECS_REVS -s"
 assertEqual $PROD_ID_RECS_REVS $(echo $RESPONSE | jq .productId)
@@ -91,7 +134,7 @@ assertEqual 3 $(echo $RESPONSE | jq ".recommendations | length")
 assertEqual 3 $(echo $RESPONSE | jq ".reviews | length")
 
 assertCurl 404 "curl http://$HOST:$PORT/product-composite/$PROD_ID_NOT_FOUND -s"
-assertEqual "\"Not found product Id: $PROD_ID_NOT_FOUND\"" "$(echo $RESPONSE | jq .message)"
+assertEqual "\"No product found $PROD_ID_NOT_FOUND\"" "$(echo $RESPONSE | jq .message)"
 
 assertCurl 200 "curl http://$HOST:$PORT/product-composite/$PROD_ID_NO_RECS -s"
 assertEqual 0 $(echo $RESPONSE | jq ".recommendations | length")

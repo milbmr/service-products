@@ -136,7 +136,7 @@ class RecommendationServiceApplicationTests extends MongoTestBase {
 
   private WebTestClient.BodyContentSpec deleteAndVerify(int productId, HttpStatus expectedStatus) {
     return client.delete()
-        .uri("/recommendation?prodcutId=" + productId)
+        .uri("/recommendation?productId=" + productId)
         .accept(APPLICATION_JSON)
         .exchange()
         .expectStatus().isEqualTo(expectedStatus)

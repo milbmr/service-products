@@ -13,5 +13,5 @@ public interface RecommendationService {
   List<Recommendation> getRecommendations(@RequestParam(value = "productId", required = true) int productId);
 
   @DeleteMapping(value = "/recommendation")
-  void deleteRecommendations(@RequestParam(value = "prodcutId", required = true) int prodcutId);
+  void deleteRecommendations(@RequestParam(value = "productId", required = true) int prodcutId);
 }

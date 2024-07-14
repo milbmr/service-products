@@ -77,16 +77,11 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 
   @Override
   public void deleteProduct(int productId) {
-    try {
       LOG.debug("Going to delete composite for product id {}", productId);
       integration.deleteProduct(productId);
       integration.deleteRecommendations(productId);
       integration.deleteReviews(productId);
       LOG.debug("deleted composite for product id {}", productId);
-    } catch (RuntimeException e) {
-      LOG.warn("delete composite failed {}", e);
-      throw e;
-    }
   }
 
   private ProductAggregate createProductAggregate(Product product, List<Recommendation> recommendations,

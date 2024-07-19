@@ -24,9 +24,9 @@ public class PersistenceTests extends MongoTestBase {
 
   @BeforeEach
   void setUp() {
-    repository.deleteAll();
+    repository.deleteAll().block();
     RecommendationEntity entity = new RecommendationEntity(1, 2, "a", 3, "c");
-    savedEntity = repository.save(entity);
+    savedEntity = repository.save(entity).block();
 
     assertEquals(entity, savedEntity);
   }
@@ -34,32 +34,33 @@ public class PersistenceTests extends MongoTestBase {
   @Test
   void create() {
     RecommendationEntity entity = new RecommendationEntity(1, 3, "a", 3, "c");
-    repository.save(entity);
+    repository.save(entity).block();
 
-    RecommendationEntity foundEntity = repository.findById(entity.getId()).get();
+    RecommendationEntity foundEntity = repository.findById(entity.getId()).block();
     assertEqualRecommendation(entity, foundEntity);
-    assertEquals(2, repository.count());
+    assertEquals(2, repository.count().block());
   }
 
   @Test
   void update() {
     savedEntity.setAuthor("a2");
-    repository.save(savedEntity);
+    repository.save(savedEntity).block();
 
-    RecommendationEntity foundEntity = repository.findById(savedEntity.getId()).get();
+    RecommendationEntity foundEntity = repository.findById(savedEntity.getId()).block();
     assertEquals(1, foundEntity.getVersion());
     assertEquals(savedEntity.getAuthor(), foundEntity.getAuthor());
   }
 
   @Test
   void delete() {
-    repository.delete(savedEntity);
-    assertFalse(repository.existsById(savedEntity.getId()));
+    repository.delete(savedEntity).block();
+    assertFalse(repository.existsById(savedEntity.getId()).block());
   }
 
   @Test
   void findByProductId() {
-    List<RecommendationEntity> entityList = repository.findByProductId(savedEntity.getProductId());
+    List<RecommendationEntity> entityList = repository.findByProductId(savedEntity.getProductId()).collectList()
+        .block();
 
     assertThat(entityList, hasSize(1));
     assertEqualRecommendation(savedEntity, entityList.get(0));
@@ -69,24 +70,24 @@ public class PersistenceTests extends MongoTestBase {
   void duplicateError() {
     assertThrows(DuplicateKeyException.class, () -> {
       RecommendationEntity entity = new RecommendationEntity(1, 2, "a", 3, "c");
-      repository.save(entity);
+      repository.save(entity).block();
     });
   }
 
   @Test
   void OptimisticLockError() {
-    RecommendationEntity entity1 = repository.findById(savedEntity.getId()).get();
-    RecommendationEntity entity2 = repository.findById(savedEntity.getId()).get();
+    RecommendationEntity entity1 = repository.findById(savedEntity.getId()).block();
+    RecommendationEntity entity2 = repository.findById(savedEntity.getId()).block();
 
     entity1.setAuthor("a1");
-    repository.save(entity1);
+    repository.save(entity1).block();
 
     assertThrows(OptimisticLockingFailureException.class, () -> {
       entity2.setAuthor("a2");
-      repository.save(entity2);
+      repository.save(entity2).block();
     });
 
-    RecommendationEntity updatedEntity = repository.findById(savedEntity.getId()).get();
+    RecommendationEntity updatedEntity = repository.findById(savedEntity.getId()).block();
     assertEquals(1, updatedEntity.getVersion());
     assertEquals("a1", updatedEntity.getAuthor());
   }

@@ -1,17 +1,18 @@
 package com.micro.api.core.recommendation;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.*;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface RecommendationService {
 
   @PostMapping(value = "/recommendation", produces = "application/json", consumes = "application/json")
-  Recommendation createRecommendation(@RequestBody Recommendation recommendation);
+  Mono<Recommendation> createRecommendation(@RequestBody Recommendation recommendation);
 
   @GetMapping(value = "/recommendation", produces = "application/json")
-  List<Recommendation> getRecommendations(@RequestParam(value = "productId", required = true) int productId);
+  Flux<Recommendation> getRecommendations(@RequestParam(value = "productId", required = true) int productId);
 
   @DeleteMapping(value = "/recommendation")
-  void deleteRecommendations(@RequestParam(value = "productId", required = true) int prodcutId);
+  Mono<Void> deleteRecommendations(@RequestParam(value = "productId", required = true) int prodcutId);
 }

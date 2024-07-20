@@ -6,15 +6,21 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.HttpStatus.*;
 import static reactor.core.publisher.Mono.just;
+import static com.micro.api.event.Event.Type.CREATE;
+import static com.micro.api.event.Event.Type.DELETE;
+
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.micro.api.core.product.Product;
+import com.micro.api.event.Event;
 import com.micro.core.product.persistence.ProductRepository;
 
 import reactor.test.StepVerifier;
@@ -24,8 +30,13 @@ class ProductServiceApplicationTests extends MongoTestBase {
 
   @Autowired
   private WebTestClient client;
+
   @Autowired
   private ProductRepository repository;
+
+  @Autowired
+  @Qualifier("messageProcessor")
+  private Consumer<Event<Integer, Product>> messageProcessor;
 
   @BeforeEach
   void setDb() {
@@ -37,8 +48,7 @@ class ProductServiceApplicationTests extends MongoTestBase {
     int productId = 1;
 
     postAndVerifyProduct(productId, OK);
-    StepVerifier.create(repository.findByProductId(productId)).
-    assertTrue(repository.findByProductId(productId));
+    StepVerifier.create(repository.findByProductId(productId)).assertTrue(repository.findByProductId(productId));
 
     getAndVerifyProduct(productId, OK).jsonPath("$.productId").isEqualTo(productId);
   }
@@ -120,6 +130,10 @@ class ProductServiceApplicationTests extends MongoTestBase {
         .exchange()
         .expectStatus().isEqualTo(expextedHttpStatus)
         .expectBody();
+  }
+
+  private void sendCreateEvent(int productId, Product product) {
+    Event<Integer, Product> event = new Event<Integer, Product>(CREATE);
   }
 
 }

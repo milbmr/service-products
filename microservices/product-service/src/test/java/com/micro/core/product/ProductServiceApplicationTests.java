@@ -17,6 +17,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import com.micro.api.core.product.Product;
 import com.micro.core.product.persistence.ProductRepository;
 
+import reactor.test.StepVerifier;
+
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ProductServiceApplicationTests extends MongoTestBase {
 
@@ -27,7 +29,7 @@ class ProductServiceApplicationTests extends MongoTestBase {
 
   @BeforeEach
   void setDb() {
-    repository.deleteAll();
+    StepVerifier.create(repository.deleteAll());
   }
 
   @Test
@@ -35,7 +37,8 @@ class ProductServiceApplicationTests extends MongoTestBase {
     int productId = 1;
 
     postAndVerifyProduct(productId, OK);
-    assertTrue(repository.findByProductId(productId).isPresent());
+    StepVerifier.create(repository.findByProductId(productId)).
+    assertTrue(repository.findByProductId(productId));
 
     getAndVerifyProduct(productId, OK).jsonPath("$.productId").isEqualTo(productId);
   }

@@ -69,6 +69,10 @@ public class ProductServiceIml implements ProductService {
 
   @Override
   public Mono<Void> deleteProduct(int productId) {
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid product Id: " + productId);
+    }
+
     LOG.debug("Trying to delete a product of id: " + productId);
     return repository.findByProductId(productId).log(LOG.getName(), FINE).map(e -> repository.delete(e))
         .flatMap(e -> e);

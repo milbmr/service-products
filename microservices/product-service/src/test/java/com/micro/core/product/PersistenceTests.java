@@ -15,11 +15,12 @@ import reactor.test.StepVerifier;
 public class PersistenceTests extends MongoTestBase {
   @Autowired
   private ProductRepository repository;
+
   private ProductEntity savedEntity;
 
   @BeforeEach
   void setUp() {
-    StepVerifier.create(repository.deleteAll());
+    StepVerifier.create(repository.deleteAll()).verifyComplete();
 
     ProductEntity entity = new ProductEntity(1, "n", 1);
     StepVerifier.create(repository.save(entity)).expectNextMatches(createdEntity -> {
@@ -32,7 +33,7 @@ public class PersistenceTests extends MongoTestBase {
   void create() {
     ProductEntity entity = new ProductEntity(2, "n", 2);
     StepVerifier.create(repository.save(entity))
-        .expectNextMatches(savedEntity -> entity.getId() == savedEntity.getId()).verifyComplete();
+        .expectNextMatches(savedEntity -> entity.getProductId() == savedEntity.getProductId()).verifyComplete();
 
     StepVerifier.create(repository.findById(entity.getId()))
         .expectNextMatches(foundEntity -> areProductEqual(entity, foundEntity));
@@ -44,10 +45,10 @@ public class PersistenceTests extends MongoTestBase {
   void update() {
     savedEntity.setName("n2");
     StepVerifier.create(repository.save(savedEntity))
-        .expectNextMatches(updatedEntity -> updatedEntity.getName() == "n2").verifyComplete();
+        .expectNextMatches(updatedEntity -> updatedEntity.getName().equals("n2")).verifyComplete();
 
     StepVerifier.create(repository.findById(savedEntity.getId()))
-        .expectNextMatches(e -> e.getVersion() == 1 && e.getName() == "n2").verifyComplete();
+        .expectNextMatches(e -> e.getVersion() == 1 && e.getName().equals("n2")).verifyComplete();
   }
 
   @Test

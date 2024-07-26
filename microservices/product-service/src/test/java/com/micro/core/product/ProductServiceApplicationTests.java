@@ -39,7 +39,7 @@ class ProductServiceApplicationTests extends MongoTestBase {
 
   @BeforeEach
   void setDb() {
-    StepVerifier.create(repository.deleteAll());
+    StepVerifier.create(repository.deleteAll()).verifyComplete();
   }
 
   @Test

@@ -27,7 +27,7 @@ public class MessageProcessorConfig {
     return event -> {
       switch (event.getEventType()) {
         case CREATE:
-          Product product = event.getDate();
+          Product product = event.getData();
           LOG.info("creating product with id " + event.getKey());
           productService.createProduct(product).block();
           break;

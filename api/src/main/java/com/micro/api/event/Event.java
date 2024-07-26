@@ -40,7 +40,7 @@ public class Event<K, T> {
     return this.key;
   }
 
-  public T getDate() {
+  public T getData() {
     return this.data;
   }
 

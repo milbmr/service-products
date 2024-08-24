@@ -94,7 +94,47 @@ app:
        host: localhost
        port: 7003
 
+spring.cloud.stream:
+ defaultBinder: rabbit
+ default.content-type: application/json
+ bindings:
+  products-out-0:
+   destination: products
+   producer:
+    required-groups: auditGroup
+  recommendations-out-0:
+   destination: recommendations
+   producer:
+    required-groups: auditGroup
+  reviews-out-0:
+   destination: reviews
+   producer:
+    required-groups: auditGroup
+
+spring.cloud.stream.kafka.binder:
+  brockers: 127.0.0.1
+  defaultBrockerPort: 9092
+
+spirng.rabbitmq:
+  host: 127.0.0.1
+  port: 5672
+  username: guest
+  password: guest
+
+management:
+  endpoint:
+    health:
+      show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
+spring.cloud.stream.bindings.product-out-0.producer:
+ partition-key-expression: headers['partitonKey']
+ partition-count: 2
 ---
+spring:
+ config:
+  activate:
+   on-profile: "docker"
 
 server:
   port: 8080
@@ -103,11 +143,6 @@ Logging:
     Level:
         root: DEBUG
         '[com.micro.microservices]': DEBUG
-
-spring:
- config:
-  activate:
-   on-profile: "docker"
 
 app:
   product-service:
@@ -119,3 +154,7 @@ app:
   review-service:
     host: review
     port: 8080
+
+spring.rabbitmq.host: rabbitmq
+
+spring.cloud.stream.kafka.binder.brockers: kafka

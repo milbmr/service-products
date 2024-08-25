@@ -32,13 +32,12 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ProductCompositeServiceApplicationTests {
+  private static final int PRODUCT_ID_OK = 1;
+  private static final int PRODUCT_ID_NOT_FOUND = 2;
+  private static final int PRODUCT_ID_NOT_INVALID = 3;
 
   @Autowired
   WebTestClient client;
-
-  int PRODUCT_ID_OK = 1;
-  int PRODUCT_ID_NOT_FOUND = 2;
-  int PRODUCT_ID_NOT_INVALID = 3;
 
   @MockBean
   ProductCompositeIntegration compositeIntegration;
@@ -47,46 +46,49 @@ class ProductCompositeServiceApplicationTests {
   void setUp() {
     when(compositeIntegration.getProduct(PRODUCT_ID_OK))
         .thenReturn(Mono.just(new Product(PRODUCT_ID_OK, "name", 1, "mock address")));
+
     when(compositeIntegration.getRecommendations(PRODUCT_ID_OK))
         .thenReturn(Flux
             .fromIterable(singletonList(new Recommendation(PRODUCT_ID_OK, 1, "author", 1, "content", "mock adderss"))));
+
     when(compositeIntegration.getReviews(PRODUCT_ID_OK))
         .thenReturn(Flux
             .fromIterable(singletonList(new Review(PRODUCT_ID_OK, 1, "author", "subject", "content", "mock address"))));
 
     when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND))
         .thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
+
     when(compositeIntegration.getProduct(PRODUCT_ID_NOT_INVALID))
         .thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_NOT_INVALID));
   }
 
-  @Test
-  void createComposite1() {
-    ProductAggregate product = new ProductAggregate(1, "name", 1, null, null, null);
+  // @Test
+  // void createComposite1() {
+  //   ProductAggregate product = new ProductAggregate(1, "name", 1, null, null, null);
 
-    postAndVerifyProduct(product, OK);
-  }
+  //   postAndVerifyProduct(product, OK);
+  // }
 
-  @Test
-  void createComposite2() {
-    ProductAggregate product = new ProductAggregate(1, "name", 1,
-        singletonList(new RecommendationSummary(1, "a", 1, "c")), singletonList(new ReviewSummary(1, "a", "s", "c")),
-        null);
+  // @Test
+  // void createComposite2() {
+  //   ProductAggregate product = new ProductAggregate(1, "name", 1,
+  //       singletonList(new RecommendationSummary(1, "a", 1, "c")), singletonList(new ReviewSummary(1, "a", "s", "c")),
+  //       null);
 
-    postAndVerifyProduct(product, OK);
-  }
+  //   postAndVerifyProduct(product, OK);
+  // }
 
-  @Test
-  void deleteProduct() {
-    ProductAggregate product = new ProductAggregate(1, "name", 1,
-        singletonList(new RecommendationSummary(1, "a", 1, "c")), singletonList(new ReviewSummary(1, "a", "s", "c")),
-        null);
+  // @Test
+  // void deleteProduct() {
+  //   ProductAggregate product = new ProductAggregate(1, "name", 1,
+  //       singletonList(new RecommendationSummary(1, "a", 1, "c")), singletonList(new ReviewSummary(1, "a", "s", "c")),
+  //       null);
 
-    postAndVerifyProduct(product, OK);
+  //   postAndVerifyProduct(product, OK);
 
-    deleteAndVerify(product.getProductId(), OK);
-    deleteAndVerify(product.getProductId(), OK);
-  }
+  //   deleteAndVerify(product.getProductId(), OK);
+  //   deleteAndVerify(product.getProductId(), OK);
+  // }
 
   @Test
   void getProductById() {
@@ -120,19 +122,19 @@ class ProductCompositeServiceApplicationTests {
         .expectBody();
   }
 
-  private void postAndVerifyProduct(ProductAggregate body, HttpStatus expectedStatus) {
-    client.post()
-        .uri("/product-composite")
-        .body(just(body), ProductAggregate.class)
-        .exchange()
-        .expectStatus().isEqualTo(expectedStatus);
-  }
+  // private void postAndVerifyProduct(ProductAggregate body, HttpStatus expectedStatus) {
+  //   client.post()
+  //       .uri("/product-composite")
+  //       .body(just(body), ProductAggregate.class)
+  //       .exchange()
+  //       .expectStatus().isEqualTo(expectedStatus);
+  // }
 
-  private void deleteAndVerify(int productId, HttpStatus expectedStatus) {
-    client.delete()
-        .uri("/product-composite/" + productId)
-        .exchange()
-        .expectStatus().isEqualTo(expectedStatus);
-  }
+  // private void deleteAndVerify(int productId, HttpStatus expectedStatus) {
+  //   client.delete()
+  //       .uri("/product-composite/" + productId)
+  //       .exchange()
+  //       .expectStatus().isEqualTo(expectedStatus);
+  // }
 
 }

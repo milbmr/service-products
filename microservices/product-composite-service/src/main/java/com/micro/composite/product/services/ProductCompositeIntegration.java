@@ -10,6 +10,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
@@ -136,6 +137,27 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
   public Mono<Void> deleteReviews(int productId) {
     return Mono.fromRunnable(() -> sendMessage("reviews-out-0", new Event<>(DELETE, productId, null)))
         .subscribeOn(publicherScheduler).then();
+  }
+
+  public Mono<Health> getProductHealth() {
+    return getHealth(productServiceUrl);
+  }
+
+  public Mono<Health> getRecommendationsHealth() {
+    return getHealth(recommendationServiceUrl);
+  }
+
+  public Mono<Health> getReviewsHealth() {
+    return getHealth(reviewServiceUrl);
+  }
+
+  private Mono<Health> getHealth(String url) {
+    url += "/actuator/health";
+    LOG.debug("Will call health endpoint on url {}", url);
+    return webClient.get().uri(url).retrieve().bodyToMono(String.class)
+        .map(s -> new Health.Builder().up().build())
+        .onErrorResume(ex -> Mono.just(new Health.Builder().down(ex).build()))
+        .log(LOG.getName(), FINE);
   }
 
   @SuppressWarnings("rawtypes")

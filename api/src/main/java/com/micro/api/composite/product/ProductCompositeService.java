@@ -1,5 +1,6 @@
 package com.micro.api.composite.product;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ public interface ProductCompositeService {
       @ApiResponse(responseCode = "400", description = "${api.responseCodes.badRequest.description}"),
       @ApiResponse(responseCode = "422", description = "${api.responseCodes.unprocessableEntity.description}")
   })
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @PostMapping(value = "/product-composite", consumes = "application/json")
   Mono<Void> createProduct(@RequestBody ProductAggregate body);
 
@@ -34,6 +36,7 @@ public interface ProductCompositeService {
       @ApiResponse(responseCode = "400", description = "${api.responseCodes.badRequest.description}"),
       @ApiResponse(responseCode = "422", description = "${api.responseCodes.unprocessableEntity.description}")
   })
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @DeleteMapping(value = "/product-composite/{productId}")
   Mono<Void> deleteProduct(@PathVariable int productId);
 }

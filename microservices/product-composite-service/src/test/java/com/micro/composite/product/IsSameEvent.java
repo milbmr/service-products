@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,10 @@ public class IsSameEvent extends TypeSafeMatcher<String> {
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static Matcher<String> sameEventExcept(Event expectedEvent) {
+    return new IsSameEvent(expectedEvent);
   }
 
   private Map createMapFromEventWithoutCreationDate(Event expectedEvent) {

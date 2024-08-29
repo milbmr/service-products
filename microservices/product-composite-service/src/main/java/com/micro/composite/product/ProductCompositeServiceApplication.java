@@ -65,8 +65,8 @@ public class ProductCompositeServiceApplication {
   private final Integer threadPoolSize;
   private final Integer taskQueSize;
 
-  public ProductCompositeServiceApplication(@Value("app.threadPoolSize:10") Integer threadPoolSize,
-      @Value("app.taskQueSize:100") Integer taskQueSize) {
+  public ProductCompositeServiceApplication(@Value("${app.threadPoolSize:10}") Integer threadPoolSize,
+      @Value("${app.taskQueSize:100}") Integer taskQueSize) {
     this.threadPoolSize = threadPoolSize;
     this.taskQueSize = taskQueSize;
   }

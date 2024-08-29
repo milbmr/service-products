@@ -7,7 +7,6 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static reactor.core.publisher.Mono.just;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +16,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import com.micro.api.composite.product.ProductAggregate;
-import com.micro.api.composite.product.RecommendationSummary;
-import com.micro.api.composite.product.ReviewSummary;
 import com.micro.api.core.product.Product;
 import com.micro.api.core.recommendation.Recommendation;
 import com.micro.api.core.review.Review;

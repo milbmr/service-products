@@ -32,7 +32,7 @@ class RecommendationServiceApplicationTests extends MongoTestBase {
   RecommendationRepository repository;
   @Autowired
   @Qualifier("messageProcessor")
-  Consumer<Event<Integer, Recommendation>> messageProcessor;
+  private Consumer<Event<Integer, Recommendation>> messageProcessor;
 
   @BeforeEach
   void setDb() {

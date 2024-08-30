@@ -1,19 +1,26 @@
 package com.micro.core.review;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.micro.api.event.Event.Type.CREATE;
+import static com.micro.api.event.Event.Type.DELETE;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static reactor.core.publisher.Mono.just;
+
+import java.util.function.Consumer;
+
 import static org.springframework.http.HttpStatus.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.micro.api.core.review.Review;
+import com.micro.api.event.Event;
+import com.micro.api.exceptions.InvalidInputException;
 import com.micro.core.review.persistence.ReviewRepository;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -23,6 +30,9 @@ class ReviewServiceApplicationTests extends PostgresTestBase {
   WebTestClient client;
   @Autowired
   ReviewRepository repository;
+  @Autowired
+  @Qualifier("messageProcessor")
+  private Consumer<Event<Integer, Review>> messageProcessor;
 
   @BeforeEach
   void setDb() {
@@ -33,9 +43,9 @@ class ReviewServiceApplicationTests extends PostgresTestBase {
   void getReviewsByProductId() {
     int productId = 1;
 
-    postAndVerifyReview(productId, 1, OK);
-    postAndVerifyReview(productId, 2, OK);
-    postAndVerifyReview(productId, 3, OK);
+    sendCreateMessage(productId, 1);
+    sendCreateMessage(productId, 2);
+    sendCreateMessage(productId, 3);
 
     assertEquals(3, repository.findByProductId(productId).size());
 
@@ -49,15 +59,16 @@ class ReviewServiceApplicationTests extends PostgresTestBase {
     int productId = 1;
     int reviewId = 1;
 
-    postAndVerifyReview(productId, reviewId, OK)
-        .jsonPath("$.productId").isEqualTo(productId)
-        .jsonPath("$.reviewId").isEqualTo(reviewId);
+    sendCreateMessage(productId, reviewId);
 
     assertEquals(1, repository.count());
 
-    postAndVerifyReview(productId, reviewId, UNPROCESSABLE_ENTITY)
-        .jsonPath("$.path").isEqualTo("/review")
-        .jsonPath("$.message").isEqualTo("Duplicate key, for prodcut id: " + productId);
+    InvalidInputException thrown = assertThrows(InvalidInputException.class,
+        () -> sendCreateMessage(productId, reviewId), "Except to throw invalid input exception");
+
+    assertEquals("Duplicate key, for prodcut id: " + productId, thrown.getMessage());
+
+    assertEquals(1, repository.count());
   }
 
   @Test
@@ -65,15 +76,13 @@ class ReviewServiceApplicationTests extends PostgresTestBase {
     int prodcutId = 1;
     int reviewId = 1;
 
-    postAndVerifyReview(prodcutId, reviewId, OK)
-        .jsonPath("$.productId").isEqualTo(prodcutId)
-        .jsonPath("$.reviewId").isEqualTo(reviewId);
+    sendCreateMessage(prodcutId, reviewId);
     assertEquals(1, repository.findByProductId(prodcutId).size());
 
-    deleteAndVerify(prodcutId, OK);
+    sendDeleteMessage(reviewId);
     assertEquals(0, repository.findByProductId(prodcutId).size());
 
-    deleteAndVerify(prodcutId, OK);
+    sendDeleteMessage(reviewId);
   }
 
   @Test
@@ -121,26 +130,39 @@ class ReviewServiceApplicationTests extends PostgresTestBase {
         .expectBody();
   }
 
-  private WebTestClient.BodyContentSpec postAndVerifyReview(int productId, int revId,
-      HttpStatus expectedStatus) {
-    Review review = new Review(productId, revId, "a", "s", "c", "sa");
-    return client.post()
-        .uri("/review")
-        .body(just(review), Review.class)
-        .accept(APPLICATION_JSON)
-        .exchange()
-        .expectStatus().isEqualTo(expectedStatus)
-        .expectHeader().contentType(APPLICATION_JSON)
-        .expectBody();
+  private void sendCreateMessage(int productId, int reviewId) {
+    Review review = new Review(productId, reviewId, "a", "s", "c", null);
+    Event<Integer, Review> event = new Event<Integer, Review>(CREATE, review.getProductId(), review);
+    messageProcessor.accept(event);
   }
 
-  private WebTestClient.BodyContentSpec deleteAndVerify(int productId, HttpStatus expectedStatus) {
-    return client.delete()
-        .uri("/review?productId=" + productId)
-        .accept(APPLICATION_JSON)
-        .exchange()
-        .expectStatus().isEqualTo(expectedStatus)
-        .expectBody();
+  private void sendDeleteMessage(int productId) {
+    Event<Integer, Review> event = new Event<Integer, Review>(DELETE, productId, null);
+    messageProcessor.accept(event);
   }
+
+  // private WebTestClient.BodyContentSpec postAndVerifyReview(int productId, int
+  // revId,
+  // HttpStatus expectedStatus) {
+  // Review review = new Review(productId, revId, "a", "s", "c", "sa");
+  // return client.post()
+  // .uri("/review")
+  // .body(just(review), Review.class)
+  // .accept(APPLICATION_JSON)
+  // .exchange()
+  // .expectStatus().isEqualTo(expectedStatus)
+  // .expectHeader().contentType(APPLICATION_JSON)
+  // .expectBody();
+  // }
+
+  // private WebTestClient.BodyContentSpec deleteAndVerify(int productId,
+  // HttpStatus expectedStatus) {
+  // return client.delete()
+  // .uri("/review?productId=" + productId)
+  // .accept(APPLICATION_JSON)
+  // .exchange()
+  // .expectStatus().isEqualTo(expectedStatus)
+  // .expectBody();
+  // }
 
 }

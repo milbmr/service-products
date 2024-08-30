@@ -24,7 +24,7 @@ public class HealthCheckConfiguration {
 
     registry.put("products", () -> integration.getProductHealth());
     registry.put("recommendations", () -> integration.getRecommendationsHealth());
-    registry.put("rviews", () -> integration.getReviewsHealth());
+    registry.put("reviews", () -> integration.getReviewsHealth());
 
     return CompositeReactiveHealthContributor.fromMap(registry);
   }

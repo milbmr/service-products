@@ -15,7 +15,7 @@ spring.cloud.function.definition: messageProcessor
 spring.cloud.stream:
   defaultBinder: rabbit
   default.contentType: application/json
-  bindings.messageProccessor-in-0:
+  bindings.messageProcessor-in-0:
     destination: reviews
     group: reviewsGroup
 
@@ -59,3 +59,17 @@ spring.datasource:
 
 spring.cloud.stream.kafka.binder.brokers: kafka
 spring.rabbitmq.host: rabbitmq
+
+---
+spring.config.activate.on-profile: streamed_partition
+spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
+ partitioned: true
+ instanceCount: 2
+
+---
+spring.config.activate.on-profile: streamed_instance_0
+spring.cloud.stream.bindings.messageProcessor-in-0.consumer.instanceIndex: 0
+
+---
+spring.config.activate.on-profile: streamed_instance_1
+spring.cloud.stream.bindings.messageProcessor-in-0.consumer.instanceIndex: 1

@@ -16,9 +16,9 @@ function assertCurl() {
 
   if [ "$httpCode" = "$expectedCode" ]; then
     if [ "$http_code" = "200" ]; then
-      echo "Test OK (http code ${http_code})"
+      echo "Test OK (http code $http_code)"
     else
-      echo "Test OK (http code ${http_code} respose ${RESPONSE})"
+      echo "Test OK (http code "$http_code", respose $RESPONSE)"
     fi
   else
     echo "Test FAILED Expected http code $expectedCode, got $httpCode, will abort!"
@@ -32,19 +32,35 @@ function assertEqual() {
   local expected=$1
   local actual=$2
 
+  echo $actual
   if [ "$actual" = "$expected" ]; then
     echo "Test OK (actual value $actual)"
   else
-    echo "Test FAILED EXPECTED VALUE $expected, GOT $actual, WILL ABORT!"
+    echo "Test FAILED EXPECTED VALUE $expected, GOT "$actual", WILL ABORT!"
     exit 1
   fi
 }
 
+function tryAgain() {
+  url="$1 --data \"$2\" -w \"%{http_code}\""
+  response=$(eval $url)
+
+  n=0
+  until [[ "$response" == "202" ]]; do
+    n=$((n + 1))
+    if [[ $n == 10 ]]; then
+      echo "Fail url"
+      exit 1
+    fi
+  done
+
+  return $response
+}
+
 function testUrl() {
   url=$@
-  curl=$(eval $url -ks -f -w "%{http_code}" -o dev/null)
-  statusCode=${curl:(-3)}
-  if [[ $statusCode == 200 ]]; then
+  actuatorStatus=$(eval $url | jq -r .status)
+  if [[ "$actuatorStatus" == "UP" ]]; then
     return 0
   else
     return 1
@@ -68,18 +84,74 @@ function waitForService() {
   echo "Done, continues.."
 }
 
+function testCompositeCreated() {
+  if ! assertCurl 201 "curl http://$HOST:$PORT/product-composite/${PROD_ID_RECS_REVS} -s"; then
+    echo -n "FAIL"
+    return 1
+  fi
+
+  set +e
+
+  assertEqual "$PROD_ID_RECS_REVS" $(echo $RESPONSE | jq .productId)
+  if [[ "$?" == "1" ]]; then return 1; fi
+
+  assertEqual 3 $(echo $RESPONSE | jq ".recommendations | length")
+  if [[ "$?" == "1" ]]; then return 1; fi
+
+  assertEqual 3 $(echo $RESPONSE | jq ".reviews | length")
+  if [[ "$?" == "1" ]]; then return 1; fi
+
+  set -e
+}
+
+function waitForMessageProcessing() {
+  echo "Waiting for messages to process"
+
+  sleep 1
+
+  n=0
+  until testCompositeCreated; do
+
+    n=$((n + 1))
+    if [[ $n == 40 ]]; then
+      echo "Test Fail messages failed to processes"
+      exit 1
+    else
+      echo -n " ,retry #$n"
+    fi
+  done
+
+  echo "All tests are processed correctly"
+}
+
 function recreateComposite() {
   local productId=$1
   local body=$2
 
-  assertCurl 200 "curl -X DELETE http://$HOST:$PORT/product-composite/${productId} -s"
-  curl -X POST http://$HOST:$PORT/product-composite -H "Content-Type: application/json" --data "$body"
+  assertCurl 202 "curl -X DELETE http://$HOST:$PORT/product-composite/${productId} -s"
+  tryAgain "curl -X POST http://$HOST:$PORT/product-composite -H \"Content-Type: application/json\"" $body
+  assertEqual 202 $?
 }
 
 function seedData() {
+  body="{\"productId\":$PROD_ID_NO_RECS"
+  body+=',"name":"product name A","weight":100, "reviews":[
+      {"reviewId":1,"author":"a","subject":"s","content":"c"},
+      {"reviewId":2,"author":"a","subject":"s","content":"c"},
+      {"reviewId":3,"author":"a","subject":"s","content":"c"}]}'
+
+  recreateComposite "$PROD_ID_NO_RECS" "$body"
+
+  body="{\"productId\":$PROD_ID_NO_REVS"
+  body+=',"name":"product name","weight":1, "recommendations":[
+      {"recommendationId":1,"author":"a","rate":1,"content":"c"},
+      {"recommendationId":2,"author":"a","rate":2,"content":"c"},
+      {"recommendationId":3,"author":"a","rate":3,"content":"c"}]}'
+
+  recreateComposite "$PROD_ID_NO_REVS" "$body"
+
   body="{\"productId\":$PROD_ID_RECS_REVS"
-  body+=\
-',"name":"product name","weight":1,"recommendations":[
+  body+=',"name":"product name","weight":1, "recommendations":[
       {"recommendationId":1,"author":"a","rate":1,"content":"c"},
       {"recommendationId":2,"author":"a","rate":2,"content":"c"},
       {"recommendationId":3,"author":"a","rate":3,"content":"c"}
@@ -89,24 +161,6 @@ function seedData() {
       {"reviewId":3,"author":"a","subject":"s","content":"c"}]}'
 
   recreateComposite "$PROD_ID_RECS_REVS" "$body"
-
-  body="{\"productId\":$PROD_ID_NO_RECS"
-  body+=\
-',"reviews":[
-      {"reviewId":1,"author":"a","subject":"s","content":"c"},
-      {"reviewId":2,"author":"a","subject":"s","content":"c"},
-      {"reviewId":3,"author":"a","subject":"s","content":"c"}]}'
-
-  recreateComposite "$PROD_ID_NO_RECS" "$body"
-
-  body="{\"productId\":$PROD_ID_NO_REVS"
-  body+=\
-',"name":"product name","weight":1,"recommendations":[
-      {"recommendationId":1,"author":"a","rate":1,"content":"c"},
-      {"recommendationId":2,"author":"a","rate":2,"content":"c"},
-      {"recommendationId":3,"author":"a","rate":3,"content":"c"}]}'
-
-  recreateComposite "$PROD_ID_NO_REVS" "$body"
 }
 
 set -e
@@ -124,9 +178,10 @@ if [[ $@ == *"start"* ]]; then
   docker compose up -d
 fi
 
-waitForService curl -X DELETE http://$HOST:$PORT/product-composite/$PROD_ID_NOT_FOUND
-
+waitForService curl -s http://$HOST:$PORT/actuator/health
 seedData
+
+waitForMessageProcessing
 
 assertCurl 200 "curl http://$HOST:$PORT/product-composite/$PROD_ID_RECS_REVS -s"
 assertEqual $PROD_ID_RECS_REVS $(echo $RESPONSE | jq .productId)

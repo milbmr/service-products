@@ -32,29 +32,34 @@ function assertEqual() {
   local expected=$1
   local actual=$2
 
-  echo $actual
+  echo "$actual"
   if [ "$actual" = "$expected" ]; then
     echo "Test OK (actual value $actual)"
   else
-    echo "Test FAILED EXPECTED VALUE $expected, GOT "$actual", WILL ABORT!"
+    echo "Test FAILED EXPECTED VALUE $expected, GOT '$actual', WILL ABORT!"
     exit 1
   fi
 }
 
 function tryAgain() {
-  url="$1 --data \"$2\" -w \"%{http_code}\""
-  response=$(eval $url)
+  url="$1 --data '$2' -w \"%{http_code}\""
+  echo $url
+  response=$(eval "$url")
+  http_code=${response:(-3)}
 
   n=0
-  until [[ "$response" == "202" ]]; do
+  until [[ "$http_code" == "202" ]]; do
     n=$((n + 1))
     if [[ $n == 10 ]]; then
-      echo "Fail url"
+      echo "Fail url, got $response"
       exit 1
+    else
+      sleep 2
+      echo "retry, #$n"
     fi
   done
 
-  return $response
+  return $http_code
 }
 
 function testUrl() {
@@ -85,7 +90,7 @@ function waitForService() {
 }
 
 function testCompositeCreated() {
-  if ! assertCurl 201 "curl http://$HOST:$PORT/product-composite/${PROD_ID_RECS_REVS} -s"; then
+  if ! assertCurl 200 "curl http://$HOST:$PORT/product-composite/${PROD_ID_RECS_REVS} -s"; then
     echo -n "FAIL"
     return 1
   fi
@@ -129,16 +134,16 @@ function recreateComposite() {
   local body=$2
 
   assertCurl 202 "curl -X DELETE http://$HOST:$PORT/product-composite/${productId} -s"
-  tryAgain "curl -X POST http://$HOST:$PORT/product-composite -H \"Content-Type: application/json\"" $body
-  assertEqual 202 $?
+  assertEqual 202 $(curl -X POST http://$HOST:$PORT/product-composite -H "Content-Type: application/json" --data "$body" -w "%{http_code}")
 }
 
 function seedData() {
   body="{\"productId\":$PROD_ID_NO_RECS"
   body+=',"name":"product name A","weight":100, "reviews":[
-      {"reviewId":1,"author":"a","subject":"s","content":"c"},
-      {"reviewId":2,"author":"a","subject":"s","content":"c"},
-      {"reviewId":3,"author":"a","subject":"s","content":"c"}]}'
+  {"reviewId":1,"author":"author 1","subject":"subject 1","content":"content 1"},
+  {"reviewId":2,"author":"author 2","subject":"subject 2","content":"content 2"},
+  {"reviewId":3,"author":"author 3","subject":"subject 3","content":"content 3"}
+]}'
 
   recreateComposite "$PROD_ID_NO_RECS" "$body"
 
@@ -162,6 +167,22 @@ function seedData() {
 
   recreateComposite "$PROD_ID_RECS_REVS" "$body"
 }
+
+# function automate() {
+#   echo "going to seed data"
+#   set +e
+#
+#   n=0
+#   until [[ "$n" == "10" ]]; do
+#     echo -n "Seed #$n, retry"
+#     seedData
+#     n=$((n + 1))
+#   done
+#
+#   set -e
+#
+#   echo "data seeded"
+# }
 
 set -e
 

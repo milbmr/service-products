@@ -7,7 +7,7 @@ services:
   depends_on:
    mongodb:
     condition: service_healthy
-   rabbitmq:
+   kafka:
     condition: service_healthy
 
  product-p1:
@@ -18,7 +18,7 @@ services:
   depends_on:
    mongodb:
     condition: service_healthy
-   rabbitmq:
+   kafka:
     condition: service_healthy
 
  recommendation:
@@ -29,7 +29,7 @@ services:
   depends_on:
    mongodb:
     condition: service_healthy
-   rabbitmq:
+   kafka:
     condition: service_healthy
 
  recommendation-p1:
@@ -40,7 +40,7 @@ services:
   depends_on:
    mongodb:
     condition: service_healthy
-   rabbitmq:
+   kafka:
     condition: service_healthy
 
  review:
@@ -51,7 +51,7 @@ services:
   depends_on:
    postgres:
     condition: service_healthy
-   rabbitmq:
+   kafka:
     condition: service_healthy
 
  review-p1:
@@ -62,7 +62,7 @@ services:
   depends_on:
    postgres:
     condition: service_healthy
-   rabbitmq:
+   kafka:
     condition: service_healthy
 
  product-composite:
@@ -73,7 +73,7 @@ services:
   environment:
     - SPRING_PROFILES_ACTIVE=docker,streamed_partition,kafka
   depends_on:
-   rabbitmq:
+   kafka:
     condition: service_healthy
  
  mongodb:
@@ -116,7 +116,7 @@ services:
     retries: 60
  
  kafka:
-  image: confluentinc/cp-kafka:7.4.6
+  image: confluentinc/cp-kafka:7.3.1
   restart: always
   mem_limit: 1024m
   ports:
@@ -128,9 +128,15 @@ services:
    - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
   depends_on:
    - zookeeper
+  healthcheck:
+    test: ["CMD", "nc", "-vz", "localhost", "9092"]
+    interval: 5s
+    timeout: 10s
+    retries: 10
+
  
  zookeeper:
-   image: confluentinc/cp-zookeeper:7.4.6
+   image: confluentinc/cp-zookeeper:7.3.1
    restart: always
    mem_limit: 512m
    ports:

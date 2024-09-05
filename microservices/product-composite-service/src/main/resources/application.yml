@@ -83,17 +83,6 @@ Logging:
         root: INFO
         '[com.micro.microservices]': DEBUG
 
-app:
-   product-service:
-       host: localhost
-       port: 7001
-   recommendation-service:
-       host: localhost
-       port: 7002
-   review-service:
-       host: localhost
-       port: 7003
-
 spring.cloud.stream:
  defaultBinder: rabbit
  default.content-type: application/json

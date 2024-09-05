@@ -2,13 +2,15 @@ package com.micro.core.review;
 
 import static com.micro.api.event.Event.Type.CREATE;
 import static com.micro.api.event.Event.Type.DELETE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import java.util.function.Consumer;
-
-import static org.springframework.http.HttpStatus.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,7 @@ import com.micro.api.event.Event;
 import com.micro.api.exceptions.InvalidInputException;
 import com.micro.core.review.persistence.ReviewRepository;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = "eureka.client.enabled=false")
 class ReviewServiceApplicationTests extends PostgresTestBase {
 
   @Autowired

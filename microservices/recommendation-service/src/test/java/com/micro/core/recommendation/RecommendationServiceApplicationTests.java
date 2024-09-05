@@ -23,7 +23,7 @@ import com.micro.api.event.Event;
 import com.micro.api.exceptions.InvalidInputException;
 import com.micro.core.recommendation.persistence.RecommendationRepository;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = "eureka.client.enabled=false")
 class RecommendationServiceApplicationTests extends MongoTestBase {
 
   @Autowired

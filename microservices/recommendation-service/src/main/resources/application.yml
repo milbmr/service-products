@@ -1,6 +1,8 @@
 server.port: 7002
 server.error.include-message: always
 
+spring.application.name: recommendation
+
 spring.data.mongodb:
   host: localhost
   port: 27017
@@ -47,6 +49,7 @@ spring.data.mongodb.auto-index-creation: true
 
 management.endpoint.health.show-details: "ALWAYS"
 management.endpoints.web.exposure.include: "*"
+
 ---
 spring.config.activate.on-profile: docker
 

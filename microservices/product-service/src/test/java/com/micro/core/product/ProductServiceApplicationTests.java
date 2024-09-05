@@ -24,7 +24,7 @@ import com.micro.core.product.persistence.ProductRepository;
 
 import reactor.test.StepVerifier;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = "eureka.client.enabled=false")
 class ProductServiceApplicationTests extends MongoTestBase {
 
   @Autowired

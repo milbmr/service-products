@@ -7,7 +7,7 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
     service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
     wait-time-in-ms-when-sync-empty: 0
     response-cache-update-interval-ms: 5000
@@ -15,4 +15,6 @@ management:
   endpoints:
     web:
       exposure:
-        exclude: "*"
+        include: "*"
+logging:
+  level: { com.netflix.eureka: OFF, com.netflix.discovery: OFF }

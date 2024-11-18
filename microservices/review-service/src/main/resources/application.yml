@@ -56,13 +56,13 @@ app.eureka-server: localhost
 
 eureka:
   client:
-    service-url:
+    serviceUrl:
       defaultZone: http://${app.eureka-server}:8761/eureka/
-    initial-instance-info-replication-interval-seconds: 5
-    registry-fetch-interval-seconds: 5
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
   instance:
-    lease-renewal-interval-in-seconds: 5
-    lease-expiration-duration-in-seconds: 5
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
 ---
 spring.config.activate.on-profile: docker
 

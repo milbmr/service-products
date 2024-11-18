@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
@@ -38,6 +37,7 @@ import reactor.core.scheduler.Scheduler;
 @Component
 public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
     private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeIntegration.class);
+
 
     private final ObjectMapper mapper;
     private final WebClient webClient;

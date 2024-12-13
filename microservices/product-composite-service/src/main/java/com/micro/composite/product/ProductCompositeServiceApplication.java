@@ -74,6 +74,7 @@ public class ProductCompositeServiceApplication {
     }
 
     @Bean
+    @LoadBalanced
     public WebClient.Builder loadBalancedWebClientBuilder() {
         return WebClient.builder();
     }

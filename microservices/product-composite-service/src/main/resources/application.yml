@@ -126,6 +126,7 @@ eureka:
   instance:
     leaseRenewalIntervalInSeconds: 5
     leaseExpirationDurationInSeconds: 5
+    instance-id: ${spring.application.name}:${random.int}
 
 ---
 spring:

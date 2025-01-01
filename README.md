@@ -39,6 +39,7 @@ It uses three core microservices:
 
 ### Getting started
 
+
 cd into the main project directory where gradlew bat file is located and run this commands.
 
 ```sh
@@ -49,15 +50,22 @@ cd into the main project directory where gradlew bat file is located and run thi
 docker compose up -d
 ```
 
+
+
 to make sure that all services are up and running before trying the api run this curl command to check the health of the microservices using actuator
 
 ```sh
 curl localhost:8080/actuator/health | jq
 ```
 
+
+
 to check that all microservices are registered correctly with Eureka navigate to http://localhost:8761
 
+
+
 #### Trying out the api
+
 
 to try the api run the following commands.
 
@@ -81,17 +89,22 @@ application/json" --data "{"productId":1,"name":"product name C","weight":300,
 ]}"
 ```
 
+
+
 to fetch the posted content
 
 ```sh
 curl localhost:8080/product-composite/1 | jq
 ```
 
+
 to delete the content
 
 ```sh
 curl -X DELETE localhost:8080/product-composite/1
 ```
+
+
 
 the service is run originally with rabbitmq to try it out with kafka instead run the following:
 
@@ -100,6 +113,8 @@ docker compose down
 export COMPOSE_FILE=docker-compose-kafka.yml
 docker build && docker compose up -d
 ```
+
+
 
 to stop the microservice
 
